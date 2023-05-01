@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>License Plate Recognition</title>
+</head>
+<body>
+    <video id="video" autoplay></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <button id="capture">Capture</button>
+    <p id="result"></p>
+
+    <script>
+        const video = document.getElementById("video");
+        const canvas = document.getElementById("canvas");
+        const captureBtn = document.getElementById("capture");
+        const result = document.getElementById("result");
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            });
+
+        captureBtn.addEventListener("click", async () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext("2d").drawImage(video, 0, 0);
+
+            const formData = new FormData();
+            canvas.toBlob(blob => {
+                formData.append("image", blob);
+                fetch("http://leegaworld.iptime.org:5000/recognize", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.license_plate) {
+                        result.textContent = `Detected license plate: ${data.license_plate}`;
+                    } else {
+                        result.textContent = "No license plate detected";
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
